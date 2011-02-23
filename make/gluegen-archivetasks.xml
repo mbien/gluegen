@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="GlueGen-archivetasks" basedir=".">
+    <macrodef name="archive.7z">
+      <attribute name="basedir" />
+      <attribute name="destfile" />
+      <attribute name="includes" />
+      <sequential>
+       <property name="destfile.path" location="@{destfile}"/> <!-- absolute path -->
+       <delete file="${destfile.path}" quiet="true" failonerror="false" />
+       <exec executable="7z"
+             searchpath="true"
+             dir="@{basedir}"
+             spawn="false"
+             failifexecutionfails="true"
+             failonerror="true">
+         <arg line="a -r ${destfile.path} @{includes}"/>
+       </exec>
+      </sequential>
+    </macrodef>  
+</project>
+
