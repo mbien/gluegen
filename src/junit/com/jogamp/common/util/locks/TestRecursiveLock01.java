@@ -28,15 +28,8 @@
  
 package com.jogamp.common.util.locks;
 
-import com.jogamp.common.util.locks.RecursiveLock;
-import java.lang.reflect.*;
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Test;
 
 public class TestRecursiveLock01 {
@@ -152,8 +145,8 @@ public class TestRecursiveLock01 {
     }
 
     class LockedObjectAction1 implements LockedObjectIf {
-        boolean shouldStop;
-        boolean stopped;
+        volatile boolean shouldStop;
+        volatile boolean stopped;
         LockedObject lo;
         volatile int loops;
         int iloops;
@@ -168,11 +161,11 @@ public class TestRecursiveLock01 {
             this.yieldMode = yieldMode;
         }
 
-        public final synchronized void stop() {
+        public final void stop() {
             shouldStop = true;
         }
 
-        public final synchronized boolean isStopped() {
+        public final boolean isStopped() {
             return stopped;
         }
 
@@ -186,10 +179,7 @@ public class TestRecursiveLock01 {
                 lo.action2Deferred(iloops, yieldMode);
                 loops--;
             }
-            synchronized(this) {
-                stopped = true;
-                notifyAll();
-            }
+            stopped = true;
         }
     }
 
