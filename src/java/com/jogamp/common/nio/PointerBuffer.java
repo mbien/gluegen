@@ -31,10 +31,11 @@
  */
 package com.jogamp.common.nio;
 
-import com.jogamp.common.os.*;
+import com.jogamp.common.os.Platform;
 import java.nio.ByteBuffer;
 import java.nio.Buffer;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Hardware independent container for native pointer arrays.
@@ -42,42 +43,42 @@ import java.util.HashMap;
  * The native values (NIO direct ByteBuffer) might be 32bit or 64bit wide,
  * depending of the CPU pointer width.
  *
+ * May reference other PointerBuffers.
+ *
  * @author Michael Bien
  * @author Sven Gothel
  */
-public abstract class PointerBuffer extends AbstractLongBuffer<PointerBuffer> {
+public final class PointerBuffer extends NativeSizeBuffer {
 
-    protected HashMap<Long, Buffer> dataMap = new HashMap<Long, Buffer>();
-
-    static {
-        NativeLibrary.ensureNativeLibLoaded();
-    }
+    protected final Map<Long, Buffer> dataMap;
 
     protected PointerBuffer(ByteBuffer bb) {
-        super(bb, elementSize());
+        super(bb);
+        dataMap = new HashMap<Long, Buffer>();
     }
 
     public static PointerBuffer allocate(int size) {
-        return new PointerBufferSE(ByteBuffer.wrap(new byte[elementSize() * size]));
+        return new PointerBuffer(ByteBuffer.wrap(new byte[elementSize() * size]));
+    }
+
+    public static PointerBuffer allocate(long[] array) {
+        return allocate(array.length).put(array, 0, array.length).rewind();
     }
 
     public static PointerBuffer allocateDirect(int size) {
-        return new PointerBufferSE(Buffers.newDirectByteBuffer(elementSize() * size));
+        return new PointerBuffer(Buffers.newDirectByteBuffer(elementSize() * size));
+    }
+
+    public static PointerBuffer allocateDirect(long[] array) {
+        return allocateDirect(array.length).put(array, 0, array.length).rewind();
     }
 
     public static PointerBuffer wrap(ByteBuffer src) {
-        PointerBuffer res = new PointerBufferSE(src);
-        res.updateBackup();
-        return res;
-
-    }
-
-    public static int elementSize() {
-        return Platform.is32Bit() ? Buffers.SIZEOF_INT : Buffers.SIZEOF_LONG;
+        return new PointerBuffer(src);
     }
 
     @Override
-    public final PointerBuffer put(PointerBuffer src) {
+    public PointerBuffer put(NativeBuffer src) {
         if (remaining() < src.remaining()) {
             throw new IndexOutOfBoundsException();
         }
@@ -86,9 +87,9 @@ public abstract class PointerBuffer extends AbstractLongBuffer<PointerBuffer> {
              addr = src.get();
              put(addr);
              Long addrL = new Long(addr);
-             Buffer bb = (Buffer) dataMap.get(addrL);
-             if(null!=bb) {
-                 dataMap.put(addrL, bb);
+             Buffer buffer = (Buffer) dataMap.get(addrL);
+             if(buffer != null) {
+                 dataMap.put(addrL, buffer);
              } else {
                  dataMap.remove(addrL);
              }
@@ -96,32 +97,36 @@ public abstract class PointerBuffer extends AbstractLongBuffer<PointerBuffer> {
         return this;
     }
 
-    /** Put the address of the given direct Buffer at the given position
-        of this pointer array.
-        Adding a reference of the given direct Buffer to this object. */
-    public final PointerBuffer referenceBuffer(int index, Buffer bb) {
-        if(null==bb) {
-            throw new RuntimeException("Buffer is null");
+    /**
+     * Put the address of the given direct Buffer at the given position
+     * of this pointer array.
+     * Adding a reference of the given direct Buffer to this object.
+     */
+    public final PointerBuffer referenceBuffer(int index, Buffer buffer) {
+        if(buffer == null) {
+            throw new IllegalArgumentException("Buffer is null");
         }
-        if(!Buffers.isDirect(bb)) {
-            throw new RuntimeException("Buffer is not direct");
+        if(buffer.isDirect() != this.isDirect()) {
+            throw new IllegalArgumentException("buffer.isDirect() != this.isDirect()");
         }
         long mask = Platform.is32Bit() ?  0x00000000FFFFFFFFL : 0xFFFFFFFFFFFFFFFFL ;
-        long bbAddr = getDirectBufferAddressImpl(bb) & mask;
-        if(0==bbAddr) {
-            throw new RuntimeException("Couldn't determine native address of given Buffer: "+bb);
+        long bbAddr = getDirectBufferAddressImpl(buffer) & mask;
+        if(bbAddr == 0) {
+            throw new RuntimeException("Couldn't determine native address of given Buffer: "+buffer);
         }
 
         put(index, bbAddr);
-        dataMap.put(new Long(bbAddr), bb);
+        dataMap.put(new Long(bbAddr), buffer);
         return this;
     }
 
-    /** Put the address of the given direct Buffer at the end
-        of this pointer array.
-        Adding a reference of the given direct Buffer to this object. */
-    public final PointerBuffer referenceBuffer(Buffer bb) {
-        referenceBuffer(position, bb);
+    /**
+     * Put the address of the given direct Buffer at the end
+     * of this pointer array.
+     * Adding a reference of the given direct Buffer to this object.
+     */
+    public final PointerBuffer referenceBuffer(Buffer buffer) {
+        referenceBuffer(position, buffer);
         position++;
         return this;
     }
@@ -132,16 +137,43 @@ public abstract class PointerBuffer extends AbstractLongBuffer<PointerBuffer> {
     }
 
     public final Buffer getReferencedBuffer() {
-        Buffer bb = getReferencedBuffer(position);
+        Buffer buffer = getReferencedBuffer(position);
         position++;
-        return bb;
+        return buffer;
     }
 
-    private native long getDirectBufferAddressImpl(Object directBuffer);
+    //PointerBuffer.c
+    protected native long getDirectBufferAddressImpl(Object directBuffer);
+
+    
+    // override with PointerBuffer as return type
+    @Override
+    public PointerBuffer put(int index, long value) {
+        return (PointerBuffer) super.put(index, value);
+    }
 
     @Override
-    public String toString() {
-        return "PointerBuffer:"+super.toString();
+    public PointerBuffer get(long[] dest, int offset, int length) {
+        return (PointerBuffer) super.get(dest, offset, length);
     }
 
+    @Override
+    public PointerBuffer put(long value) {
+        return (PointerBuffer) super.put(value);
+    }
+
+    @Override
+    public PointerBuffer put(long[] src, int offset, int length) {
+        return (PointerBuffer) super.put(src, offset, length);
+    }
+
+    @Override
+    public PointerBuffer position(int newPos) {
+        return (PointerBuffer) super.position(newPos);
+    }
+
+    @Override
+    public PointerBuffer rewind() {
+        return (PointerBuffer) super.rewind();
+    }
 }

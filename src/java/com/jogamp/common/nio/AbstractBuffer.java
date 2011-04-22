@@ -36,18 +36,17 @@ import com.jogamp.common.os.*;
 import java.nio.ByteBuffer;
 
 /**
+ * Common baseclass for native buffers.
  * @author Michael Bien
  * @author Sven Gothel
  */
-public abstract class AbstractBuffer<B extends AbstractBuffer> implements NativeBuffer<B> {
+abstract class AbstractBuffer<B extends AbstractBuffer> implements NativeBuffer {
 
     protected final ByteBuffer bb;
-    protected int capacity;
+    protected final int capacity;
+    
     protected int position;
 
-    static {
-        NativeLibrary.ensureNativeLibLoaded();
-    }
 
     protected AbstractBuffer(ByteBuffer bb, int elementSize) {
         this.bb = bb;
@@ -68,7 +67,7 @@ public abstract class AbstractBuffer<B extends AbstractBuffer> implements Native
         return position;
     }
 
-    public final B position(int newPos) {
+    public B position(int newPos) {
         if (0 > newPos || newPos >= capacity) {
             throw new IndexOutOfBoundsException("Sorry to interrupt, but the position "+newPos+" was out of bounds. " +
                                                 "My capacity is "+capacity()+".");
@@ -85,7 +84,7 @@ public abstract class AbstractBuffer<B extends AbstractBuffer> implements Native
         return position < capacity;
     }
 
-    public final B rewind() {
+    public B rewind() {
         position = 0;
         return (B) this;
     }
@@ -108,7 +107,7 @@ public abstract class AbstractBuffer<B extends AbstractBuffer> implements Native
 
     @Override
     public String toString() {
-        return "AbstractBuffer[capacity "+capacity+", position "+position+", elementSize "+(bb.capacity()/capacity)+", ByteBuffer.capacity "+bb.capacity()+"]";
+        return getClass().getSimpleName()+"[capacity "+capacity+", position "+position+", elementSize "+(bb.capacity()/capacity)+", ByteBuffer.capacity "+bb.capacity()+"]";
     }
 
 }
