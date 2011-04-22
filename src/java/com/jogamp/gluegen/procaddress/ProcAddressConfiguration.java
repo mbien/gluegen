@@ -39,11 +39,19 @@
 package com.jogamp.gluegen.procaddress;
 
 import com.jogamp.gluegen.JavaConfiguration;
-import java.io.*;
-import java.text.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.StringTokenizer;
 
-import com.jogamp.gluegen.*;
 
 public class ProcAddressConfiguration extends JavaConfiguration {
 

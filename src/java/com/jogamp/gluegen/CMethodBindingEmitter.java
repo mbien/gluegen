@@ -39,14 +39,15 @@
 
 package com.jogamp.gluegen;
 
-import java.util.*;
-import java.io.*;
+import com.jogamp.gluegen.cgram.types.ArrayType;
+import com.jogamp.gluegen.cgram.types.MachineDescription;
+import com.jogamp.gluegen.cgram.types.PointerType;
+import com.jogamp.gluegen.cgram.types.Type;
+import java.io.PrintWriter;
 import java.text.MessageFormat;
-
-import com.jogamp.gluegen.cgram.types.*;
+import java.util.List;
 import java.util.logging.Logger;
 
-import static java.util.logging.Level.*;
 
 /** Emits the C-side component of the Java<->C JNI binding. */
 public class CMethodBindingEmitter extends FunctionEmitter {

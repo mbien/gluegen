@@ -40,11 +40,12 @@
 package com.jogamp.gluegen.procaddress;
 
 import com.jogamp.gluegen.CMethodBindingEmitter;
-import com.jogamp.gluegen.MethodBinding;
 import com.jogamp.gluegen.JavaType;
-import java.io.*;
-import com.jogamp.gluegen.*;
-import com.jogamp.gluegen.cgram.types.*;
+import com.jogamp.gluegen.MethodBinding;
+import com.jogamp.gluegen.cgram.types.FunctionSymbol;
+import com.jogamp.gluegen.cgram.types.PointerType;
+import com.jogamp.gluegen.cgram.types.Type;
+import java.io.PrintWriter;
 
 public class ProcAddressCMethodBindingEmitter extends CMethodBindingEmitter {
 
