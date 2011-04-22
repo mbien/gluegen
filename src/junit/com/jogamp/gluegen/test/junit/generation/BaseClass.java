@@ -29,6 +29,7 @@
 package com.jogamp.gluegen.test.junit.generation;
 
 import com.jogamp.common.nio.Buffers;
+import com.jogamp.common.nio.NativeSizeBuffer;
 import com.jogamp.common.nio.PointerBuffer;
 import com.jogamp.common.os.Platform;
 import java.nio.ByteBuffer;
@@ -74,7 +75,7 @@ public class BaseClass {
           long context = 0;
           ByteBuffer bb=null;
           LongBuffer lb=null;
-          PointerBuffer pb=null;
+          NativeSizeBuffer nsb=null;
           IntBuffer ib=null;
           long[] larray = null;
           int larray_offset = 0;
@@ -97,8 +98,8 @@ public class BaseClass {
           lb = binding.arrayTestFoo2(lb);
           lb = binding.arrayTestFoo2(larray, larray_offset);
 
-          pb = binding.arrayTestFoo3ArrayToPtrPtr(lb);
-          pb = binding.arrayTestFoo3PtrPtr(pb);
+          nsb = binding.arrayTestFoo3ArrayToPtrPtr(lb);
+          nsb = binding.arrayTestFoo3PtrPtr(nsb);
 
           result = binding.bufferTest(bb);
           result = binding.bufferTestNioOnly(bb);
@@ -123,7 +124,7 @@ public class BaseClass {
 
           long cfg=0;
           cfg = binding.typeTestAnonSingle(cfg);
-          pb = binding.typeTestAnonPointer(pb);
+          nsb = binding.typeTestAnonPointer(nsb);
 
           i = binding.typeTestInt32T(i, i);
           i = binding.typeTestUInt32T(i, i);
@@ -268,12 +269,12 @@ public class BaseClass {
               Assert.assertTrue("Wrong result: "+lb3.capacity(), Bindingtest1.ARRAY_SIZE*Bindingtest1.ARRAY_SIZE == lb3.capacity());
               Assert.assertTrue("Wrong result: "+lb3.remaining(), Bindingtest1.ARRAY_SIZE*Bindingtest1.ARRAY_SIZE == lb3.remaining());
 
-              PointerBuffer pb = binding.arrayTestFoo3ArrayToPtrPtr(lb3);
+              NativeSizeBuffer pb = binding.arrayTestFoo3ArrayToPtrPtr(lb3);
               // System.out.println("pb: "+pb);
               Assert.assertTrue("Wrong result: "+pb.capacity(), Bindingtest1.ARRAY_SIZE == pb.capacity());
               Assert.assertTrue("Wrong result: "+pb.remaining(), Bindingtest1.ARRAY_SIZE == pb.remaining());
 
-              PointerBuffer pb2 = binding.arrayTestFoo3PtrPtr(pb);
+              NativeSizeBuffer pb2 = binding.arrayTestFoo3PtrPtr(pb);
 
               Assert.assertNotNull(pb2);
               Assert.assertTrue("Wrong result: "+pb2.capacity(), Bindingtest1.ARRAY_SIZE == pb2.capacity());
@@ -306,7 +307,7 @@ public class BaseClass {
               Assert.assertNotNull(pb.getReferencedBuffer(0));
               Assert.assertTrue("Wrong result: "+pb.getReferencedBuffer(0)+" != "+lb2, pb.getReferencedBuffer(0).equals(lb2));
 
-              PointerBuffer pb2 = binding.arrayTestFoo3PtrPtr(pb);
+              NativeSizeBuffer pb2 = binding.arrayTestFoo3PtrPtr(pb);
 
               Assert.assertNotNull(pb2);
               Assert.assertTrue("Wrong result: "+pb2.capacity(), Bindingtest1.ARRAY_SIZE == pb2.capacity());
@@ -390,7 +391,7 @@ public class BaseClass {
                 Assert.assertTrue("Wrong result: 0x"+Long.toHexString(cfg_native)+" != 0x"+Long.toHexString(t), cfg_native==t);
               }
               pb.rewind();
-              PointerBuffer pb2 = binding.typeTestAnonPointer(pb);
+              NativeSizeBuffer pb2 = binding.typeTestAnonPointer(pb);
               Assert.assertTrue("Wrong result: "+pb2.capacity(), Bindingtest1.ARRAY_SIZE == pb2.capacity());
               Assert.assertTrue("Wrong result: "+pb2.remaining(), Bindingtest1.ARRAY_SIZE == pb2.remaining());
               for(i=0; i<Bindingtest1.ARRAY_SIZE; i++) {

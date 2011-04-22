@@ -595,7 +595,7 @@ public class JavaMethodBindingEmitter extends FunctionEmitter {
       }
 
       if (type.isNIOBuffer()) {
-          if(type.isNIOPointerBuffer()) {
+          if(type.isNIONativeSizeBuffer()) {
               if (directNIOOnly) {
                   writer.print( getArgumentName(i)+ " != null ? " + getArgumentName(i) + ".getBuffer() : null");
               } else {
@@ -736,8 +736,8 @@ public class JavaMethodBindingEmitter extends FunctionEmitter {
       if (!returnType.isNIOByteBuffer()) {
         // See whether we have to expand pointers to longs
         if (getBinding().getCReturnType().pointerDepth() >= 2) {
-          if (returnType.isNIOPointerBuffer()) {
-              writer.println("    return PointerBuffer.wrap(_res);");
+          if (returnType.isNIONativeSizeBuffer()) {
+              writer.println("    return NativeSizeBuffer.wrap(_res);");
           } else if (returnType.isNIOLongBuffer()) {
               writer.println("    return _res.asLongBuffer();");
           } else {

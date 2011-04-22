@@ -70,6 +70,7 @@ public class JavaType {
   private static JavaType nioIntBufferType;
   private static JavaType nioLongBufferType;
   private static JavaType nioPointerBufferType;
+  private static JavaType nioNativeSizeBufferType;
   private static JavaType nioFloatBufferType;
   private static JavaType nioDoubleBufferType;
   private static JavaType nioByteBufferArrayType;
@@ -199,6 +200,12 @@ public class JavaType {
     return nioPointerBufferType;
   }
 
+  public static JavaType forNIONativeSizeBufferClass()  {
+    if(nioNativeSizeBufferType == null)
+        nioNativeSizeBufferType = createForClass(com.jogamp.common.nio.NativeSizeBuffer.class);
+    return nioNativeSizeBufferType;
+  }
+
   public static JavaType forNIOFloatBufferClass() {
     if (nioFloatBufferType == null) {
       nioFloatBufferType = createForClass(java.nio.FloatBuffer.class);
@@ -301,18 +308,18 @@ public class JavaType {
         return "jobjectArray /*elements are String*/";
       }
 
-      Class<?> elementType = clazz.getComponentType();
+      Class<?> componentType = clazz.getComponentType();
 
       if (isNIOBufferArray()) {
-        return "jobjectArray /*elements are " + elementType.getName() + "*/";
+        return "jobjectArray /*elements are " + componentType.getName() + "*/";
       }
 
-      if (elementType.isArray()) {
+      if (componentType.isArray()) {
         // Type is array-of-arrays-of-something
         
-        if (elementType.getComponentType().isPrimitive()) {          
+        if (componentType.getComponentType().isPrimitive()) {
           // Type is an array-of-arrays-of-primitive          
-          return "jobjectArray /* elements are " + elementType.getComponentType() + "[]*/";
+          return "jobjectArray /* elements are " + componentType.getComponentType() + "[]*/";
           //return "jobjectArray";
         } else {
           throw new RuntimeException("Multi-dimensional arrays of types that are not primitives or Strings are not supported.");          
@@ -353,6 +360,10 @@ public class JavaType {
 
   public boolean isNIOPointerBuffer()  {
     return (clazz == com.jogamp.common.nio.PointerBuffer.class);
+  }
+
+  public boolean isNIONativeSizeBuffer()  {
+    return (clazz == com.jogamp.common.nio.NativeSizeBuffer.class);
   }
 
   public boolean isString() {

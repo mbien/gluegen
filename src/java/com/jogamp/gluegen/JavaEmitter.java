@@ -1282,7 +1282,7 @@ public class JavaEmitter implements GlueEmitter {
           } else if (targetType.isInt()) {
             // size_t and intptr_t is always a PointerBuffer since size is arch dependent
             if ("size_t".equals(targetType.getName()) || "intptr_t".equals(targetType.getName())) {
-              return JavaType.forNIOPointerBufferClass();
+              return JavaType.forNIONativeSizeBufferClass();
             }
             switch ((int) targetType.getSize(curMachDesc)) {
               case 1:  return JavaType.createForCCharPointer();
@@ -1331,7 +1331,7 @@ public class JavaEmitter implements GlueEmitter {
           if (targetType.isPointer()) {
             // t is<type>**, targetType is <type>*, we need to get <type>
             bottomType = targetType.asPointer().getTargetType();
-            return JavaType.forNIOPointerBufferClass();
+            return JavaType.forNIONativeSizeBufferClass();
           } else {
             // t is<type>[][], targetType is <type>[], we need to get <type>
             bottomType = targetType.asArray().getElementType();
@@ -1774,14 +1774,14 @@ public class JavaEmitter implements GlueEmitter {
         if (mappedType.isCVoidPointerType() ||
             mappedType.isCCharPointerType() ||
             mappedType.isCShortPointerType() ||
-            mappedType.isNIOPointerBuffer() ||
+            mappedType.isNIONativeSizeBuffer() ||
             (mappedType.isArray() &&
              (mappedType.getJavaClass() == ArrayTypes.byteBufferArrayClass) ||
              (mappedType.getJavaClass() == ArrayTypes.shortBufferArrayClass))) {
           // convert mapped type from:
           //   void*, byte[], and short[] to String
           //   ByteBuffer[] and ShortBuffer[] to String[]
-          if (mappedType.isArray() || mappedType.isNIOPointerBuffer()) {
+          if (mappedType.isArray() || mappedType.isNIONativeSizeBuffer()) {
             mappedType = javaType(ArrayTypes.stringArrayClass);
           } else {
             mappedType = javaType(String.class);
