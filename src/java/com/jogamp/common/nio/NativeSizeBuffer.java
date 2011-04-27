@@ -83,25 +83,20 @@ public class NativeSizeBuffer extends AbstractBuffer<NativeSizeBuffer> {
     }
 
     @Override
-    public final boolean hasArray() {
-        return false;
-    }
-
-    @Override
-    public final long[] array() {
-        return null;
-    }
-
-    @Override
     public NativeSizeBuffer put(int index, long value) {
-        if (0 > index || index >= capacity) {
-            throw new IndexOutOfBoundsException("index: "+index +" capacity: "+capacity);
-        }
         putImpl(index, value);
         return this;
     }
 
     // no bounds checking
+    private void putImpl(long value) {
+        if (Platform.is32Bit()) {
+            bb.putInt((int) value);
+        } else {
+            bb.putLong(value);
+        }
+    }
+
     private void putImpl(int index, long value) {
         if (Platform.is32Bit()) {
             bb.putInt(index*elementSize(), (int) value);
@@ -125,7 +120,8 @@ public class NativeSizeBuffer extends AbstractBuffer<NativeSizeBuffer> {
      * Relative put method. Put the value at the current position and increment the position by one.
      */
     public NativeSizeBuffer put(long value) {
-        return put(position++, value);
+        putImpl(value);
+        return this;
     }
 
     /**
@@ -140,7 +136,7 @@ public class NativeSizeBuffer extends AbstractBuffer<NativeSizeBuffer> {
             throw new IndexOutOfBoundsException();
         }
         while(length > 0) {
-            putImpl(position++, src[offset++]);
+            putImpl(src[offset++]);
             length--;
         }
         return this;
@@ -150,20 +146,25 @@ public class NativeSizeBuffer extends AbstractBuffer<NativeSizeBuffer> {
      * Relative get method. Get the value at the current position and increment the position by one.
      */
     public long get() {
-        return get(position++);
+        return getImpl();
     }
 
     /**
      * Returns the value at the given index.
      */
     public long get(int index) {
-        if (0 > index || index >= capacity) {
-            throw new IndexOutOfBoundsException();
-        }
         return getImpl(index);
     }
 
     // no bounds checking
+    private long getImpl() {
+        if (Platform.is32Bit()) {
+            return bb.getInt();
+        } else {
+            return bb.getLong();
+        }
+    }
+
     private long getImpl(int index) {
         if (Platform.is32Bit()) {
             return bb.getInt(index*elementSize());
@@ -185,7 +186,7 @@ public class NativeSizeBuffer extends AbstractBuffer<NativeSizeBuffer> {
             throw new IndexOutOfBoundsException();
         }
         while(length > 0) {
-            dest[offset++] = getImpl(position++);
+            dest[offset++] = getImpl();
             length--;
         }
         return this;

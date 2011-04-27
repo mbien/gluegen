@@ -61,7 +61,7 @@ public interface NativeBuffer {
 
     public boolean isDirect();
 
-    public long[] array();
+    public byte[] array();
 
     public NativeBuffer rewind();
 

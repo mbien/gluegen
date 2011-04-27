@@ -31,7 +31,6 @@
  */
 package com.jogamp.common.nio;
 
-import com.jogamp.common.os.*;
 
 import java.nio.ByteBuffer;
 
@@ -44,19 +43,18 @@ abstract class AbstractBuffer<B extends AbstractBuffer> implements NativeBuffer 
 
     protected final ByteBuffer bb;
     protected final int capacity;
-    
-    protected int position;
 
+    private final int ELEMENT_SIZE;
 
     protected AbstractBuffer(ByteBuffer bb, int elementSize) {
         this.bb = bb;
 
-        capacity = bb.capacity() / elementSize;
-        position = 0;
+        this.capacity = bb.capacity() / elementSize;
+        this.ELEMENT_SIZE = elementSize;
     }
 
     public final int limit() {
-        return capacity;
+        return bb.limit()/ELEMENT_SIZE;
     }
 
     public final int capacity() {
@@ -64,7 +62,7 @@ abstract class AbstractBuffer<B extends AbstractBuffer> implements NativeBuffer 
     }
 
     public final int position() {
-        return position;
+        return bb.position()/ELEMENT_SIZE;
     }
 
     public B position(int newPos) {
@@ -72,29 +70,33 @@ abstract class AbstractBuffer<B extends AbstractBuffer> implements NativeBuffer 
             throw new IndexOutOfBoundsException("Sorry to interrupt, but the position "+newPos+" was out of bounds. " +
                                                 "My capacity is "+capacity()+".");
         }
-        position = newPos;
+        bb.position(newPos*ELEMENT_SIZE);
         return (B)this;
     }
 
     public final int remaining() {
-        return capacity - position;
+        return bb.remaining()/ELEMENT_SIZE;
     }
 
     public final boolean hasRemaining() {
-        return position < capacity;
+        return bb.hasRemaining();
     }
 
     public B rewind() {
-        position = 0;
+        bb.rewind();
         return (B) this;
     }
 
     public boolean hasArray() {
-        return false;
+        return bb.hasArray();
+    }
+
+    public final byte[] array() {
+        return bb.array();
     }
 
     public int arrayOffset() {
-        return 0;
+        return bb.arrayOffset();
     }
 
     public final ByteBuffer getBuffer() {
@@ -107,7 +109,8 @@ abstract class AbstractBuffer<B extends AbstractBuffer> implements NativeBuffer 
 
     @Override
     public String toString() {
-        return getClass().getSimpleName()+"[capacity "+capacity+", position "+position+", elementSize "+(bb.capacity()/capacity)+", ByteBuffer.capacity "+bb.capacity()+"]";
+        return getClass().getSimpleName() + "[capacity "+capacity()+", position "+position()
+                                          + ", elementSize "+(bb.capacity()/capacity)+"]";
     }
 
 }

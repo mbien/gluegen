@@ -43,7 +43,7 @@ import java.util.Map;
  * The native values (NIO direct ByteBuffer) might be 32bit or 64bit wide,
  * depending of the CPU pointer width.
  *
- * May reference other PointerBuffers.
+ * May reference other Buffers.
  *
  * @author Michael Bien
  * @author Sven Gothel
@@ -86,15 +86,38 @@ public final class PointerBuffer extends NativeSizeBuffer {
         while (src.hasRemaining()) {
              addr = src.get();
              put(addr);
-             Long addrL = new Long(addr);
-             Buffer buffer = (Buffer) dataMap.get(addrL);
+             Buffer buffer = dataMap.get(addr);
              if(buffer != null) {
-                 dataMap.put(addrL, buffer);
+                 dataMap.put(addr, buffer);
              } else {
-                 dataMap.remove(addrL);
+                 dataMap.remove(addr);
              }
         }
         return this;
+    }
+
+    private void referenceBufferImpl(int index, Buffer buffer, boolean relative) {
+
+        if(buffer == null) {
+            throw new IllegalArgumentException("Buffer is null");
+        }
+        if(buffer.isDirect() != this.isDirect()) {
+            throw new IllegalArgumentException("buffer.isDirect() != this.isDirect()");
+        }
+
+        long mask = Platform.is32Bit() ?  0x00000000FFFFFFFFL : 0xFFFFFFFFFFFFFFFFL ;
+        long bbAddr = getDirectBufferAddressImpl(buffer) & mask;
+        if(bbAddr == 0) {
+            throw new RuntimeException("Couldn't determine native address of given Buffer: "+buffer);
+        }
+
+        if(relative) {
+            put(bbAddr);
+        }else{
+            put(index, bbAddr);
+        }
+        dataMap.put(bbAddr, buffer);
+
     }
 
     /**
@@ -103,20 +126,7 @@ public final class PointerBuffer extends NativeSizeBuffer {
      * Adding a reference of the given direct Buffer to this object.
      */
     public final PointerBuffer referenceBuffer(int index, Buffer buffer) {
-        if(buffer == null) {
-            throw new IllegalArgumentException("Buffer is null");
-        }
-        if(buffer.isDirect() != this.isDirect()) {
-            throw new IllegalArgumentException("buffer.isDirect() != this.isDirect()");
-        }
-        long mask = Platform.is32Bit() ?  0x00000000FFFFFFFFL : 0xFFFFFFFFFFFFFFFFL ;
-        long bbAddr = getDirectBufferAddressImpl(buffer) & mask;
-        if(bbAddr == 0) {
-            throw new RuntimeException("Couldn't determine native address of given Buffer: "+buffer);
-        }
-
-        put(index, bbAddr);
-        dataMap.put(new Long(bbAddr), buffer);
+        referenceBufferImpl(index, buffer, false);
         return this;
     }
 
@@ -126,20 +136,18 @@ public final class PointerBuffer extends NativeSizeBuffer {
      * Adding a reference of the given direct Buffer to this object.
      */
     public final PointerBuffer referenceBuffer(Buffer buffer) {
-        referenceBuffer(position, buffer);
-        position++;
+        referenceBufferImpl(0, buffer, true);
         return this;
     }
 
     public final Buffer getReferencedBuffer(int index) {
         long addr = get(index);
-        return dataMap.get(new Long(addr));
+        return dataMap.get(addr);
     }
 
     public final Buffer getReferencedBuffer() {
-        Buffer buffer = getReferencedBuffer(position);
-        position++;
-        return buffer;
+        long addr = get();
+        return dataMap.get(addr);
     }
 
     //PointerBuffer.c
