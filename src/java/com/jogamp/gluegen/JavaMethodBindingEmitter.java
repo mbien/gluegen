@@ -461,8 +461,23 @@ public class JavaMethodBindingEmitter extends FunctionEmitter {
         if (javaType.isNIOBuffer()) {
 
           if (directNIOOnly) {
-            writer.println("    if (!Buffers.isDirect(" + argName + "))");
-            writer.println("      throw new " + getRuntimeExceptionType() + "(\"Argument \\\"" + argName + "\\\" was not a direct buffer\");");
+            writer.println("    Buffer _"+argName+";");
+            writer.println("    int _"+argName+"_offset;");
+            writer.println("    if ("+argName+" == null) {");
+            writer.println("        _"+argName+"        = null;");
+            writer.println("        _"+argName+"_offset = 0;");
+            writer.println("    } else if ("+argName+".isDirect()) {");
+            if(javaType.isNIONativeSizeBuffer()) {
+                writer.println("        _"+argName+"        =  "+argName+".getBuffer();");
+                writer.println("        _"+argName+"_offset = _"+argName+".position();");
+            }else{
+                writer.println("        _"+argName+"        = "+argName+";");
+                writer.println("        _"+argName+"_offset = Buffers.getDirectBufferByteOffset(_"+argName+");");
+            }
+            writer.println("    } else {");
+            writer.println("        throw new "+getRuntimeExceptionType()+"(\"Argument \\\""+argName+"\\\" was not a direct buffer\");");
+            writer.println("    }");
+            writer.println();
           } else {
             writer.println("    boolean "+isNIOArgName(i)+" = "+argName+" != null && Buffers.isDirect("+argName+");");
           }
@@ -603,7 +618,7 @@ public class JavaMethodBindingEmitter extends FunctionEmitter {
           final String isNioArgName = isNIOArgName(i);
           if(type.isNIONativeSizeBuffer()) {
               if (directNIOOnly) {
-                  writer.print( argName+ " != null ? " + argName + ".getBuffer() : null");
+                  writer.print( "_"+argName);
               } else {
                   writer.print( isNioArgName + " ? ( " + argName+ " != null ? " + argName + ".getBuffer() : null )");
                   writer.print( " : Buffers.getArray(" + argName + ")" );
@@ -630,7 +645,7 @@ public class JavaMethodBindingEmitter extends FunctionEmitter {
       if (type.isNIOBuffer()) {
         final String isNioArgName = isNIOArgName(i);
         if (directNIOOnly) {
-          writer.print( ", Buffers.getDirectBufferByteOffset(" + argName + ")");
+          writer.print( ", _"+argName+"_offset");
         } else {
           writer.print( ", " + isNioArgName + " ? Buffers.getDirectBufferByteOffset(" + argName + ")");
           writer.print(        " : Buffers.getIndirectBufferByteOffset(" + argName + ")");
