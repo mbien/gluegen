@@ -76,6 +76,9 @@ public class CachedBufferFactory {
     }
     
     private CachedBufferFactory(int initialSize, int allocationSize) {
+        if(initialSize < 0 || allocationSize < 0) {
+            throw new IllegalArgumentException("sizes must be >= 0");
+        }
         currentBuffer = Buffers.newDirectByteBuffer(initialSize);
         ALLOCATION_SIZE = allocationSize;
     }
@@ -104,7 +107,7 @@ public class CachedBufferFactory {
      * with RuntimeExceptions.
      */
     public static CachedBufferFactory create(int initialSize, boolean fixed) {
-        return new CachedBufferFactory(initialSize, fixed?-1:DEFAULT_ALLOCATION_SIZE);
+        return new CachedBufferFactory(initialSize, fixed?0:DEFAULT_ALLOCATION_SIZE);
     }
     
     /**
@@ -133,7 +136,7 @@ public class CachedBufferFactory {
      * Synchronized version of {@link #create(int, boolean)}.
      */
     public static CachedBufferFactory createSynchronized(int initialSize, boolean fixed) {
-        return new SynchronizedCachedBufferFactory(initialSize, fixed?-1:DEFAULT_ALLOCATION_SIZE);
+        return new SynchronizedCachedBufferFactory(initialSize, fixed?0:DEFAULT_ALLOCATION_SIZE);
     }
     
     /**
@@ -148,7 +151,7 @@ public class CachedBufferFactory {
      * as limited by the initial size.
      */
     public boolean isFixed() {
-        return ALLOCATION_SIZE == -1;
+        return ALLOCATION_SIZE == 0;
     }
     
     /**
@@ -156,11 +159,11 @@ public class CachedBufferFactory {
      * This represents the initial size if {@link #isFixed()} == true.
      */
     public int getAllocationSize() {
-        return ALLOCATION_SIZE;
+        return isFixed()?currentBuffer.capacity():ALLOCATION_SIZE;
     }
     
     private void checkIfFixed() {
-        if(ALLOCATION_SIZE == -1) {
+        if(isFixed()) {
             throw new RuntimeException("fixed size buffer factory ran out ouf bounds.");
         }
     }
@@ -185,7 +188,6 @@ public class CachedBufferFactory {
         currentBuffer.limit(currentBuffer.capacity());
         return result;
     }
-    
 
     public ByteBuffer newDirectByteBuffer(byte[] values, int offset, int lenght) {
         return (ByteBuffer)newDirectByteBuffer(lenght).put(values, offset, lenght).rewind();
@@ -293,6 +295,38 @@ public class CachedBufferFactory {
 
     public CharBuffer newDirectCharBuffer(char[] values) {
         return newDirectCharBuffer(values, 0);
+    }
+
+    public NativeSizeBuffer newDirectNativeSizeBuffer(int numElements) {
+        return NativeSizeBuffer.allocateDirect(numElements);
+    }
+
+    public NativeSizeBuffer newDirectNativeSizeBuffer(long[] values, int offset, int lenght) {
+        return NativeSizeBuffer.allocateDirect(values.length).put(values, offset, lenght).rewind();
+    }
+
+    public NativeSizeBuffer newDirectNativeSizeBuffer(long[] values, int offset) {
+        return newDirectNativeSizeBuffer(values.length).put(values, offset, values.length - offset);
+    }
+
+    public NativeSizeBuffer newDirectNativeSizeBuffer(long[] values) {
+        return newDirectNativeSizeBuffer(values, 0);
+    }
+
+    public PointerBuffer newDirectPointerBuffer(int numElements) {
+        return PointerBuffer.allocateDirect(numElements);
+    }
+
+    public PointerBuffer newDirectPointerBuffer(long[] values, int offset, int lenght) {
+        return PointerBuffer.allocateDirect(values.length).put(values, offset, lenght).rewind();
+    }
+
+    public PointerBuffer newDirectPointerBuffer(long[] values, int offset) {
+        return newDirectPointerBuffer(values.length).put(values, offset, values.length - offset);
+    }
+
+    public PointerBuffer newDirectPointerBuffer(long[] values) {
+        return newDirectPointerBuffer(values, 0);
     }
 
     @Override
