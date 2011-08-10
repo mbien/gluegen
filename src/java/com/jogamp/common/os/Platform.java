@@ -32,6 +32,7 @@
 package com.jogamp.common.os;
 
 import com.jogamp.common.nio.Buffers;
+import com.jogamp.gluegen.runtime.NativeLibLoader;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
@@ -76,7 +77,7 @@ public class Platform {
 
         boolean libsLoaded = true;
         try{
-            NativeLibrary.ensureNativeLibLoaded();
+            NativeLibLoader.loadGlueGenRT();
         }catch (UnsatisfiedLinkError err){
             libsLoaded = false;
         }

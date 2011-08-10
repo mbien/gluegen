@@ -36,70 +36,36 @@
  * Sun gratefully acknowledges that this software was originally authored
  * and developed by Kenneth Bradley Russell and Christopher John Kline.
  */
-
 package com.jogamp.gluegen.runtime;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.security.*;
+import com.jogamp.common.jvm.JNILibLoaderBase;
 
 /** Class providing control over whether GlueGen loads the native code
-    associated with the NativeLibrary implementation. Alternative app
-    launchers such as those running within applets may want to disable
-    this default loading behavior and load the native code via another
-    (manual) mechanism. */
-public class NativeLibLoader {
-  private static volatile boolean loadingEnabled = true;
-  private static volatile boolean didLoading;
+associated with the NativeLibrary implementation. Alternative app
+launchers such as those running within applets may want to disable
+this default loading behavior and load the native code via another
+(manual) mechanism. */
+public class NativeLibLoader extends JNILibLoaderBase {
 
-  public static void disableLoading() {
-    loadingEnabled = false;
-  }
+    private static volatile boolean loadingEnabled = true;
+    private static volatile boolean loaded;
 
-  public static void enableLoading() {
-    loadingEnabled = true;
-  }
-  
-  public static void loadGlueGenRT() {
-    if (!didLoading && loadingEnabled) { // volatile: ok
-      synchronized (NativeLibLoader.class) {
-        if (!didLoading && loadingEnabled) {
-          didLoading = true;
-          AccessController.doPrivileged(new PrivilegedAction() {
-              public Object run() {
-                loadLibraryInternal("gluegen-rt");
-                return null;
-              }
-            });
-        }
-      }
+    public static void disableLoading() {
+        loadingEnabled = false;
     }
-  }
 
-  private static void loadLibraryInternal(String libraryName) {
-    String sunAppletLauncher = System.getProperty("sun.jnlp.applet.launcher");
-    boolean usingJNLPAppletLauncher = Boolean.valueOf(sunAppletLauncher).booleanValue();
-
-    if (usingJNLPAppletLauncher) {
-        try {
-          Class jnlpAppletLauncherClass = Class.forName("org.jdesktop.applet.util.JNLPAppletLauncher");
-          Method jnlpLoadLibraryMethod = jnlpAppletLauncherClass.getDeclaredMethod("loadLibrary", new Class[] { String.class });
-          jnlpLoadLibraryMethod.invoke(null, new Object[] { libraryName });
-        } catch (Exception e) {
-          Throwable t = e;
-          if (t instanceof InvocationTargetException) {
-            t = ((InvocationTargetException) t).getTargetException();
-          }
-          if (t instanceof Error)
-            throw (Error) t;
-          if (t instanceof RuntimeException) {
-            throw (RuntimeException) t;
-          }
-          // Throw UnsatisfiedLinkError for best compatibility with System.loadLibrary()
-          throw (UnsatisfiedLinkError) new UnsatisfiedLinkError().initCause(e);
-        }
-    } else {
-      System.loadLibrary(libraryName);
+    public static void enableLoading() {
+        loadingEnabled = true;
     }
-  }
+
+    public static void loadGlueGenRT() {
+        if (!loaded && loadingEnabled) { // volatile: ok
+            synchronized (NativeLibLoader.class) {
+                if (!loaded && loadingEnabled) {
+                    loaded = true;
+                    loadLibrary("gluegen-rt", false);
+                }
+            }
+        }
+    }
 }

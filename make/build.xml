@@ -618,12 +618,17 @@
         <include name="jogamp/common/**" />
       </fileset>
     </jar>
-    <jar destfile="${build}/gluegen-rt-natives-${os.and.arch}.jar" manifest="${build}/Manifest-rt.temp">
+    <!-- Build gluegen-rt-natives-os-arch.jar. -->
+    <mkdir dir="${build}/obj/${os.and.arch}"/>
+    <copy todir="${build}/obj/${os.and.arch}">
       <fileset dir="${build}/obj">
         <include name="*gluegen-rt.${native.library.suffix}" />
       </fileset>
-    </jar>
-
+    </copy>
+    <jar basedir="${build}/obj" includes="${os.and.arch}/*" manifest="${build}/Manifest-rt.temp"
+        destfile="${build}/gluegen-rt-natives-${os.and.arch}.jar"/>
+    <delete dir="${build}/obj/${os.and.arch}"/>
+        
     <!-- Copy antlr.jar into build directory for convenience so
          gluegen.jar can be run via "java -jar". antlr.jar is
          referenced via a Class-Path entry in the Manifest of

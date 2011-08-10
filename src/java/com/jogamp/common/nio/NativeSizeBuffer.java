@@ -31,8 +31,8 @@
  */
 package com.jogamp.common.nio;
 
-import com.jogamp.common.os.NativeLibrary;
 import com.jogamp.common.os.Platform;
+import com.jogamp.gluegen.runtime.NativeLibLoader;
 import java.nio.ByteBuffer;
 
 
@@ -48,7 +48,7 @@ import java.nio.ByteBuffer;
 public class NativeSizeBuffer extends AbstractBuffer<NativeSizeBuffer> {
 
     static {
-        NativeLibrary.ensureNativeLibLoaded();
+        NativeLibLoader.loadGlueGenRT();
     }
 
     protected NativeSizeBuffer(ByteBuffer bb) {

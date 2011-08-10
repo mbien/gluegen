@@ -38,6 +38,11 @@
  */
 package com.jogamp.common.jvm;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -116,6 +121,9 @@ public class JNILibLoaderBase {
 
         private static final Method customLoadLibraryMethod;
         private static final AccessControlContext localACC = AccessController.getContext();
+        private static final String osAndArch;
+        private static final String ext;
+        private static final String prefix;
 
         static {
 
@@ -158,6 +166,30 @@ public class JNILibLoaderBase {
             }
 
             customLoadLibraryMethod = loadLibraryMethod;
+
+            // assamble lib namespace
+            String os = System.getProperty("os.name").toLowerCase();
+            if(os.contains("windows")) {
+                os = "windows";
+                ext = "dll";
+                prefix = "";
+            }else if(os.contains("mac os")) {
+                os = "mac";
+                ext = "jnilib";
+                prefix = "lib";
+            }else {
+                os = "linux";
+                ext = "so";
+                prefix = "lib";
+            }
+
+            String arch = System.getProperty("os.arch").toLowerCase();
+            if(arch.contains("64")) {
+                arch = "amd64";
+            }else{
+                arch = "i586";
+            }
+            osAndArch = os+"-"+arch;
         }
 
         public boolean loadLibrary(String libname, boolean ignoreError) {
@@ -199,6 +231,14 @@ public class JNILibLoaderBase {
             if (null != customLoadLibraryMethod && !libraryName.equals("jawt")) {
                 loadCustom(libraryName);
             } else{
+                try {
+                    if(loadFromClasspath(libraryName)) {
+                        return;
+                    }
+                } catch (IOException ex) {
+                    // fail hard: lib was found in classpath but could not be extracted
+                    throw new RuntimeException("can not load "+libraryName+" from classpath", ex);
+                }
                 loadFromLibpath(libraryName);
             }
         }
@@ -227,5 +267,40 @@ public class JNILibLoaderBase {
             System.loadLibrary(libraryName);
         }
 
+        /**
+         * Attempts classpath libloading, returns true on success.
+         * @throws IOException thrown when the lib has been found but something went wrong in the extraction process.
+         */
+        private boolean loadFromClasspath(String libraryName) throws IOException {
+
+            // cp filesystem
+            String path = '/'+osAndArch+'/'+prefix+libraryName+'.'+ext;
+
+            InputStream in = getClass().getResourceAsStream(path);
+            if (in != null) {
+                File copy = File.createTempFile(prefix+libraryName, '.' + ext);
+                copy.deleteOnExit();
+                OutputStream out = null;
+                try {
+                    out = new FileOutputStream(copy);
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, read);
+                    }
+                } finally {
+                    try{
+                        in.close();
+                    }finally{
+                        if (out != null) {
+                            out.close();
+                        }
+                    }
+                }
+                System.load(copy.getPath());
+                return true;
+            }
+            return false;
+        }
     }
 }

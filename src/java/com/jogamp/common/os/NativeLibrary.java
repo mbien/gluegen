@@ -39,6 +39,7 @@
 
 package com.jogamp.common.os;
 
+import com.jogamp.common.jvm.JNILibLoaderBase;
 import com.jogamp.gluegen.runtime.NativeLibLoader;
 import java.io.*;
 import java.lang.reflect.*;
@@ -183,7 +184,7 @@ public class NativeLibrary implements DynamicLookupHelper {
       if (DEBUG) {
         System.err.println("Trying to load " + path);
       }
-      ensureNativeLibLoaded();
+      NativeLibLoader.loadGlueGenRT();
       long res;
       if(global) {
           res = dynLink.openLibraryGlobal(path, DEBUG);
@@ -422,15 +423,4 @@ public class NativeLibrary implements DynamicLookupHelper {
     return null;
   }
 
-  private static volatile boolean loadedDynLinkNativeLib;
-  public static void ensureNativeLibLoaded() {
-    if (!loadedDynLinkNativeLib) { // volatile: ok
-      synchronized (NativeLibrary.class) {
-        if (!loadedDynLinkNativeLib) {
-          loadedDynLinkNativeLib = true;
-          NativeLibLoader.loadGlueGenRT();
-        }
-      }
-    }
-  }
 }
