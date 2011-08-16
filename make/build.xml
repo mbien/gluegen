@@ -560,7 +560,7 @@
            includes="${gluegen-rt.classes},${jogamp.common.classes}"
            excludes="${gluegen.excludes}"
            memoryMaximumSize="${javac.memorymax}"
-           source="${target.sourcelevel}" debug="${javacdebug}" debuglevel="${javacdebuglevel}">
+           source="${target.sourcelevel}" target="${target.sourcelevel}" debug="${javacdebug}" debuglevel="${javacdebuglevel}">
       <src path="${src.java}" />
       <src path="${src.generated.java}" />
       <classpath refid="antlr.classpath" />
