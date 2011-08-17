@@ -174,7 +174,7 @@ public class JNILibLoaderBase {
                 ext = "dll";
                 prefix = "";
             }else if(os.contains("mac os")) {
-                os = "mac";
+                os = "macosx";
                 ext = "jnilib";
                 prefix = "lib";
             }else {
@@ -184,7 +184,9 @@ public class JNILibLoaderBase {
             }
 
             String arch = System.getProperty("os.arch").toLowerCase();
-            if(arch.contains("64")) {
+            if(os.equals("macosx")) {
+                arch = "universal";
+            } else if(arch.contains("64")) {
                 arch = "amd64";
             }else{
                 arch = "i586";
